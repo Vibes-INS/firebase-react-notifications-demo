@@ -1,22 +1,28 @@
 import logo from './logo.svg';
 import './App.css';
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import { fetchToken, onMessageListener } from './firebase';
 import {Button, Toast} from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 function App() {
-
   const [show, setShow] = useState(false);
   const [notification, setNotification] = useState({title: '', body: ''});
   const [isTokenFound, setTokenFound] = useState(false);
   fetchToken(setTokenFound);
 
-  onMessageListener().then(payload => {
-    setNotification({title: payload.notification.title, body: payload.notification.body})
-    setShow(true);
-    console.log(payload);
-  }).catch(err => console.log('failed: ', err));
+  useEffect(() => {
+    const listener = onMessageListener((payload) => {
+      setNotification({title: payload.notification.title, body: payload.notification.body})
+      new Notification(payload.notification.title, {
+        body: payload.notification.body,
+        icon: payload.notification.icon,
+      })
+      setShow(true);
+      console.log('payload: ', payload);
+    })
+    return () => listener()
+  })
 
   const onShowNotificationClicked = () => {
     setNotification({title: "Notification", body: "This is a test notification"})
@@ -48,7 +54,6 @@ function App() {
         <img src={logo} className="App-logo" alt="logo" />
         <Button onClick={() => onShowNotificationClicked()}>Show Toast</Button>
       </header>
-      
     </div>
   );
 }
